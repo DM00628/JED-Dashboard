@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>District Capacity Dashboard</title>
+<style>
+
+  :root {
+    --bg: #f5fbfd;
+    --bg-secondary: #edf7fb;
+    --bg-tertiary: #e8f1f7;
+    --surface: #ffffff;
+    --surface-soft: #f8fcfe;
+    --text: #163650;
+    --text-secondary: #587185;
+    --text-tertiary: #85a0b3;
+    --border: rgba(22,54,80,0.10);
+    --border-hover: rgba(22,54,80,0.18);
+    --accent: #00a0d2;
+    --accent-dark: #0e4f7d;
+    --accent-soft: #e7f8fc;
+    --warm: #f58b57;
+    --warm-soft: #fff1ea;
+    --success: #87bf96;
+    --shadow-soft: 0 18px 42px rgba(18,60,89,0.08);
+    --shadow-card: 0 10px 24px rgba(18,60,89,0.05);
+    --radius-sm: 10px;
+    --radius-md: 18px;
+    --radius-lg: 28px;
+    --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: var(--font); color: var(--text); background: linear-gradient(180deg, #f8fcfe 0%, #eef5fa 100%); margin: 0; padding: 28px 18px; line-height: 1.6; font-size: 14px; }
+  .wrap { max-width: 1140px; margin: 0 auto; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-soft); overflow: hidden; }
+  .header { padding: 34px 38px 28px 38px; margin-bottom: 24px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, #edf9fc 0%, #ffffff 52%, #fff5ee 100%); }
+  .eyebrow { display: inline-block; margin-bottom: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-dark); background: rgba(255,255,255,0.65); padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(14,79,125,0.08); }
+  .title { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 8px 0; color: var(--accent-dark); max-width: 780px; }
+  .sub { font-size: 14px; color: var(--text-secondary); margin: 0; line-height: 1.75; max-width: 920px; }
+  .version-badge { display: inline-block; background: var(--warm-soft); color: #c56c39; padding: 5px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; margin-left: 10px; vertical-align: middle; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid rgba(197,108,57,0.12); }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 38px 24px 38px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); }
+  .toolbar label { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+  .toolbar input, .toolbar select, .toolbar button { height: 40px; font-family: var(--font); font-size: 13px; padding: 0 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); color: var(--text); }
+  .toolbar button { cursor: pointer; transition: all 0.15s; }
+  .toolbar button:hover { background: var(--bg-secondary); border-color: var(--border-hover); }
+  .toolbar button.primary { background: var(--accent-dark); color: white; border-color: var(--accent-dark); box-shadow: 0 8px 18px rgba(14,79,125,0.18); }
+  .toolbar button.primary:hover { background: #0b4167; }
+  .dist-input { width: 170px; }
+  .save-status { font-size: 11px; color: var(--text-tertiary); margin-left: auto; }
+
+  .mode-toggle { display: inline-flex; gap: 0; margin: 0 38px 24px 38px; padding: 4px; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; width: fit-content; background: var(--bg-secondary); }
+  .mode-toggle button { padding: 10px 18px; border: none; background: transparent; cursor: pointer; font-size: 13px; font-family: var(--font); color: var(--text-secondary); border-radius: 999px; }
+  .mode-toggle button.active { background: var(--accent-dark); color: white; font-weight: 600; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 38px 24px 38px; }
+  .metric { background: linear-gradient(180deg, #ffffff, #f7fbfd); border: 1px solid var(--border); border-radius: 20px; padding: 18px; box-shadow: var(--shadow-card); }
+  .metric-label { font-size: 11px; color: var(--text-secondary); margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.03em; }
+  .metric-value { font-size: 22px; font-weight: 600; margin: 0; }
+  .metric-sub { font-size: 11px; color: var(--text-tertiary); margin: 3px 0 0 0; }
+
+  .domain-tabs { display: flex; gap: 8px; margin: 0 38px 16px 38px; flex-wrap: wrap; }
+  .dtab { padding: 10px 16px; font-size: 13px; border-radius: 999px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: var(--text); font-family: var(--font); transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease; }
+  .dtab:hover { border-color: rgba(14,79,125,0.35); color: var(--accent-dark); }
+  .dtab.active { background: #0e4f7d; color: #ffffff; border-color: #0e4f7d; font-weight: 600; box-shadow: 0 10px 20px rgba(14,79,125,0.18); }
+  .dtab.active .dtab-meta { color: rgba(255,255,255,0.88); opacity: 1; }
+  .dtab-meta { opacity: 0.78; font-size: 11px; margin-left: 4px; }
+
+  #indicators-container { padding: 0 38px; }
+  .indicator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 24px 24px; margin-bottom: 16px; box-shadow: var(--shadow-card); }
+  .ind-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .ind-name { font-size: 20px; font-weight: 650; letter-spacing: -0.02em; margin: 0; }
+  .ind-tag { font-size: 10px; padding: 6px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); white-space: nowrap; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+  .ind-defn { font-size: 13px; color: var(--text-secondary); line-height: 1.65; margin: 0 0 14px 0; }
+  .ind-score-display { background: #f6fbfd; border: 1px solid var(--border); border-radius: 18px; padding: 14px 16px; margin: 12px 0 16px 0; display: flex; justify-content: space-between; align-items: center; }
+  .ind-score-display.scored { background: #E6F1FB; }
+  .ind-score-display.scored.sc-1 { background: #FCEBEB; }
+  .ind-score-display.scored.sc-2 { background: #FAEEDA; }
+  .ind-score-display.scored.sc-3 { background: #E6F1FB; }
+  .ind-score-display.scored.sc-4 { background: #EAF3DE; }
+  .ind-score-label { font-size: 12px; color: var(--text-secondary); }
+  .ind-score-val { font-size: 18px; font-weight: 600; }
+
+  .section-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin: 16px 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em; }
+  .question-block { border-left: 4px solid rgba(0,160,210,0.18); padding: 14px 16px; margin-bottom: 14px; background: #fbfdfe; border: 1px solid var(--border); border-radius: 18px; }
+  .question-block.answered { border-left-color: #378ADD; }
+  .question-block.answered.q-1 { border-left-color: #E24B4A; }
+  .question-block.answered.q-2 { border-left-color: #EF9F27; }
+  .question-block.answered.q-3 { border-left-color: #378ADD; }
+  .question-block.answered.q-4 { border-left-color: #639922; }
+  .q-text { font-size: 13px; font-weight: 600; margin: 0 0 10px 0; line-height: 1.5; }
+  .q-num { display: inline-block; background: var(--accent-dark); color: white; width: 18px; height: 18px; border-radius: 50%; text-align: center; line-height: 18px; font-size: 10px; margin-right: 8px; vertical-align: middle; }
+  .q-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .q-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; cursor: pointer; background: white; font-size: 12px; line-height: 1.55; transition: all 0.14s ease; }
+  .q-option:hover { border-color: var(--border-hover); background: var(--surface-soft); }
+  .q-option input { margin-top: 2px; flex-shrink: 0; }
+  .q-option.selected { border-width: 1px; font-weight: 500; }
+  .q-option.selected[data-val="1"] { border-color: #E24B4A; background: #FCEBEB; color: #A32D2D; }
+  .q-option.selected[data-val="2"] { border-color: #EF9F27; background: #FAEEDA; color: #854F0B; }
+  .q-option.selected[data-val="3"] { border-color: #378ADD; background: #E6F1FB; color: #0C447C; }
+  .q-option.selected[data-val="4"] { border-color: #639922; background: #EAF3DE; color: #3B6D11; }
+  .q-val-badge { display: inline-block; width: 22px; height: 22px; border-radius: 8px; text-align: center; line-height: 22px; font-size: 11px; font-weight: 700; flex-shrink: 0; background: var(--accent-soft); color: var(--accent-dark); }
+  .q-evidence { width: 100%; min-height: 46px; font-size: 12px; font-family: var(--font); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; resize: vertical; background: white; color: var(--text); line-height: 1.55; margin-top: 6px; }
+  .q-evidence::placeholder { color: var(--text-tertiary); }
+  .q-evidence:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .q-sources { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; font-style: italic; }
+
+  .trust-block { background: #eef8fc; border-left: 4px solid var(--accent); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; font-size: 12px; color: #2e627f; line-height: 1.65; }
+  .trust-block strong { font-weight: 700; }
+  .justification-block { background: #f8fcfe; border: 1px solid var(--border); border-radius: 16px; padding: 13px 14px; margin-top: 16px; }
+  .justification-block label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px; color: var(--text); }
+  .justification-block textarea { width: 100%; min-height: 52px; font-size: 12px; font-family: var(--font); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; resize: vertical; background: white; color: var(--text); line-height: 1.55; }
+  .justification-block textarea:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .disconfirming-block { background: var(--warm-soft); border: 1px solid rgba(245,139,87,0.20); border-radius: 16px; padding: 13px 14px; margin-top: 10px; }
+  .disconfirming-block label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px; color: #8d522e; }
+  .disconfirming-block textarea { width: 100%; min-height: 46px; font-size: 12px; font-family: var(--font); border: 1px solid rgba(245,139,87,0.34); border-radius: 14px; padding: 10px 12px; resize: vertical; background: white; color: var(--text); line-height: 1.55; }
+
+  .progress-bar { background: var(--border); height: 4px; border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { background: var(--accent); height: 100%; transition: width 0.3s; }
+
+  .actions-row { display: flex; gap: 8px; margin: 28px 38px 0 38px; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .actions-row button, .narrative-actions button, #compare-view button { height: 40px; padding: 0 18px; font-size: 13px; font-family: var(--font); border: 1px solid var(--border); border-radius: 999px; background: white; cursor: pointer; color: var(--text); }
+  .actions-row button:hover, .narrative-actions button:hover, #compare-view button:hover { background: var(--bg-secondary); border-color: var(--border-hover); }
+  .actions-row button.primary { background: var(--accent-dark); color: white; border-color: var(--accent-dark); }
+
+  .narrative-section, .compare-section { margin: 28px 38px 0 38px; padding-top: 20px; border-top: 1px solid var(--border); display: none; }
+  .narrative-section.show, .compare-section.show { display: block; }
+  .narrative-section h2, .compare-section h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px 0; color: var(--accent-dark); }
+  .narrative-body { background: #f5fafc; border: 1px solid var(--border); border-radius: 20px; padding: 20px 22px; font-size: 13px; line-height: 1.75; white-space: pre-wrap; font-family: Menlo, Consolas, monospace; }
+  .narrative-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  #compare-view { padding: 0 38px 0 38px; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .compare-panel { background: white; border: 1px solid var(--border); border-radius: 20px; padding: 16px 18px; box-shadow: var(--shadow-card); }
+  .compare-panel h3 { font-size: 14px; margin: 0 0 8px 0; font-weight: 600; }
+  .compare-panel-meta { font-size: 11px; color: var(--text-secondary); margin: 0 0 10px 0; }
+  .compare-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  .compare-table th { text-align: left; padding: 8px 6px; border-bottom: 0.5px solid var(--border); font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .compare-table td { padding: 8px 6px; border-bottom: 0.5px solid var(--border); }
+  .compare-table td.agree { background: #EAF3DE; color: #3B6D11; }
+  .compare-table td.disagree { background: #FCEBEB; color: #A32D2D; }
+  .compare-table td.partial { background: #FAEEDA; color: #854F0B; }
+  .kappa-box { background: white; border: 1px solid var(--border); padding: 14px 18px; border-radius: 20px; margin-bottom: 14px; display: flex; gap: 16px; box-shadow: var(--shadow-card); }
+  .kappa-box > div { flex: 1; }
+  .kappa-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .kappa-value { font-size: 20px; font-weight: 600; }
+
+  .footer { margin: 40px 38px 0 38px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-tertiary); text-align: center; }
+  details.districts-list { margin: 20px 38px 0 38px; }
+  details.districts-list summary { cursor: pointer; font-size: 13px; color: var(--text-secondary); padding: 8px 0; }
+  .dist-list-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin-top: 8px; }
+  .dist-list-item { background: white; border: 1px solid var(--border); padding: 12px 14px; border-radius: 16px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 14px rgba(15,23,42,0.03); }
+  .dist-list-item button { background: none; border: none; cursor: pointer; color: var(--accent-dark); font-size: 11px; padding: 2px 6px; font-family: var(--font); }
+  .dist-list-item button:hover { text-decoration: underline; }
+
+  @media (max-width: 700px) {
+    .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-left: 18px; margin-right: 18px; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .header { padding-left: 18px; padding-right: 18px; }
+    .toolbar, .mode-toggle, .domain-tabs, .actions-row, .narrative-section, details.districts-list, .footer { margin-left: 18px; margin-right: 18px; }
+    #indicators-container, #compare-view { padding-left: 18px; padding-right: 18px; }
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="eyebrow">District Mental Health Initiative</div>
+    <h1 class="title">District Capacity Scoring Dashboard <span class="version-badge">Auto-score</span></h1>
+    <p class="sub">Use the evidence-anchored response options to score each guiding question. Indicator ratings are computed automatically from your answers, creating a clear and consistent workflow for district capacity review, district comparison, and inter-rater reliability checks.</p>
+  </div>
+
+  <div class="toolbar">
+    <label>District</label>
+    <input type="text" id="district-name" class="dist-input" placeholder="e.g. District 03" />
+    <label>Cohort</label>
+    <select id="cohort">
+      <option value="">—</option>
+      <option value="Cohort 1">Cohort 1</option>
+      <option value="Cohort 2">Cohort 2</option>
+      <option value="Cohort 3">Cohort 3</option>
+    </select>
+    <label>Evaluator</label>
+    <input type="text" id="scorer-name" class="dist-input" placeholder="Your name" style="width: 140px;" />
+    <button id="load-btn" class="primary">Load / Start</button>
+    <button id="reset-btn">Clear form</button>
+    <span class="save-status" id="save-status"></span>
+  </div>
+
+  <div class="mode-toggle">
+    <button id="mode-score" class="active">Score district</button>
+    <button id="mode-compare">Compare evaluators (IRR)</button>
+  </div>
+
+  <div id="score-view">
+    <div class="summary-grid" id="summary-grid"></div>
+    <div class="domain-tabs" id="domain-tabs"></div>
+    <div id="indicators-container"></div>
+
+    <div class="actions-row">
+      <button id="summary-btn" class="primary">Generate capacity narrative</button>
+      <button id="export-json-btn">Export audit trail (JSON)</button>
+      <button id="export-md-btn">Export district report (Markdown)</button>
+      <button id="import-btn">Import JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" />
+    </div>
+
+    <div class="narrative-section" id="narrative-section">
+      <h2>Draft capacity narrative</h2>
+      <div class="narrative-body" id="narrative-body"></div>
+      <div class="narrative-actions">
+        <button id="copy-narrative-btn">Copy to clipboard</button>
+        <button id="close-narrative-btn">Close</button>
+      </div>
+    </div>
+
+    <details class="districts-list" id="districts-details">
+      <summary>Saved districts in this browser</summary>
+      <div class="dist-list-grid" id="districts-list"></div>
+    </details>
+  </div>
+
+  <div id="compare-view" style="display:none;">
+    <h2 style="font-size:18px; font-weight:500; margin:0 0 8px 0;">Compare two evaluator files</h2>
+    <p style="font-size:13px; color:var(--text-secondary); margin: 0 0 16px 0; max-width: 720px; line-height:1.6;">Load two JSON exports from the same district — one per evaluator — to compute agreement and Cohen's kappa at the indicator level. Disagreements are highlighted so you can target your consensus meeting.</p>
+
+    <div class="compare-grid">
+      <div class="compare-panel">
+        <h3>Evaluator A</h3>
+        <button id="load-compare-a">Choose file</button>
+        <input type="file" id="file-compare-a" accept=".json" style="display:none" />
+        <p class="compare-panel-meta" id="meta-a">No file loaded</p>
+      </div>
+      <div class="compare-panel">
+        <h3>Evaluator B</h3>
+        <button id="load-compare-b">Choose file</button>
+        <input type="file" id="file-compare-b" accept=".json" style="display:none" />
+        <p class="compare-panel-meta" id="meta-b">No file loaded</p>
+      </div>
+    </div>
+
+    <div id="compare-results"></div>
+  </div>
+
+  <div class="footer">
+    Data saves to your browser's local storage. Export regularly to preserve your work.
+  </div>
+</div>
+
+<script>
+alert('Dashboard file uploaded successfully. If you want, next I can add a README preview section or convert this into a more modular app structure.');
+</script>
+</body>
+</html>

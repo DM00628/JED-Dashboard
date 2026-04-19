@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>District Capacity Dashboard</title>
+<style>
+
+  :root {
+    --bg: #f5fbfd;
+    --bg-secondary: #edf7fb;
+    --bg-tertiary: #e8f1f7;
+    --surface: #ffffff;
+    --surface-soft: #f8fcfe;
+    --text: #163650;
+    --text-secondary: #587185;
+    --text-tertiary: #85a0b3;
+    --border: rgba(22,54,80,0.10);
+    --border-hover: rgba(22,54,80,0.18);
+    --accent: #00a0d2;
+    --accent-dark: #0e4f7d;
+    --accent-soft: #e7f8fc;
+    --warm: #f58b57;
+    --warm-soft: #fff1ea;
+    --success: #87bf96;
+    --shadow-soft: 0 18px 42px rgba(18,60,89,0.08);
+    --shadow-card: 0 10px 24px rgba(18,60,89,0.05);
+    --radius-sm: 10px;
+    --radius-md: 18px;
+    --radius-lg: 28px;
+    --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: var(--font); color: var(--text); background: linear-gradient(180deg, #f8fcfe 0%, #eef5fa 100%); margin: 0; padding: 28px 18px; line-height: 1.6; font-size: 14px; }
+  .wrap { max-width: 1140px; margin: 0 auto; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-soft); overflow: hidden; }
+  .header { padding: 34px 38px 28px 38px; margin-bottom: 24px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, #edf9fc 0%, #ffffff 52%, #fff5ee 100%); }
+  .eyebrow { display: inline-block; margin-bottom: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-dark); background: rgba(255,255,255,0.65); padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(14,79,125,0.08); }
+  .title { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 8px 0; color: var(--accent-dark); max-width: 780px; }
+  .sub { font-size: 14px; color: var(--text-secondary); margin: 0; line-height: 1.75; max-width: 920px; }
+  .version-badge { display: inline-block; background: var(--warm-soft); color: #c56c39; padding: 5px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; margin-left: 10px; vertical-align: middle; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid rgba(197,108,57,0.12); }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 38px 24px 38px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); }
+  .toolbar label { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+  .toolbar input, .toolbar select, .toolbar button { height: 40px; font-family: var(--font); font-size: 13px; padding: 0 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); color: var(--text); }
+  .toolbar button { cursor: pointer; transition: all 0.15s; }
+  .toolbar button:hover { background: var(--bg-secondary); border-color: var(--border-hover); }
+  .toolbar button.primary { background: var(--accent-dark); color: white; border-color: var(--accent-dark); box-shadow: 0 8px 18px rgba(14,79,125,0.18); }
+  .toolbar button.primary:hover { background: #0b4167; }
+  .dist-input { width: 170px; }
+  .save-status { font-size: 11px; color: var(--text-tertiary); margin-left: auto; }
+
+  .mode-toggle { display: inline-flex; gap: 0; margin: 0 38px 24px 38px; padding: 4px; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; width: fit-content; background: var(--bg-secondary); }
+  .mode-toggle button { padding: 10px 18px; border: none; background: transparent; cursor: pointer; font-size: 13px; font-family: var(--font); color: var(--text-secondary); border-radius: 999px; }
+  .mode-toggle button.active { background: var(--accent-dark); color: white; font-weight: 600; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 38px 24px 38px; }
+  .metric { background: linear-gradient(180deg, #ffffff, #f7fbfd); border: 1px solid var(--border); border-radius: 20px; padding: 18px; box-shadow: var(--shadow-card); }
+  .metric-label { font-size: 11px; color: var(--text-secondary); margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.03em; }
+  .metric-value { font-size: 22px; font-weight: 600; margin: 0; }
+  .metric-sub { font-size: 11px; color: var(--text-tertiary); margin: 3px 0 0 0; }
+
+  .domain-tabs { display: flex; gap: 8px; margin: 0 38px 16px 38px; flex-wrap: wrap; }
+  .dtab { padding: 10px 16px; font-size: 13px; border-radius: 999px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: var(--text); font-family: var(--font); transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease; }
+  .dtab:hover { border-color: rgba(14,79,125,0.35); color: var(--accent-dark); }
+  .dtab.active { background: #0e4f7d; color: #ffffff; border-color: #0e4f7d; font-weight: 600; box-shadow: 0 10px 20px rgba(14,79,125,0.18); }
+  .dtab.active .dtab-meta { color: rgba(255,255,255,0.88); opacity: 1; }
+  .dtab-meta { opacity: 0.78; font-size: 11px; margin-left: 4px; }
+
+  #indicators-container { padding: 0 38px; }
+  .indicator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 24px 24px; margin-bottom: 16px; box-shadow: var(--shadow-card); }
+  .ind-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .ind-name { font-size: 20px; font-weight: 650; letter-spacing: -0.02em; margin: 0; }
+  .ind-tag { font-size: 10px; padding: 6px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); white-space: nowrap; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+  .ind-defn { font-size: 13px; color: var(--text-secondary); line-height: 1.65; margin: 0 0 14px 0; }
+  .ind-score-display { background: #f6fbfd; border: 1px solid var(--border); border-radius: 18px; padding: 14px 16px; margin: 12px 0 16px 0; display: flex; justify-content: space-between; align-items: center; }
+  .ind-score-display.scored { background: #E6F1FB; }
+  .ind-score-display.scored.sc-1 { background: #FCEBEB; }
+  .ind-score-display.scored.sc-2 { background: #FAEEDA; }
+  .ind-score-display.scored.sc-3 { background: #E6F1FB; }
+  .ind-score-display.scored.sc-4 { background: #EAF3DE; }
+  .ind-score-label { font-size: 12px; color: var(--text-secondary); }
+  .ind-score-val { font-size: 18px; font-weight: 600; }
+
+  .section-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin: 16px 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em; }
+  .question-block { border-left: 4px solid rgba(0,160,210,0.18); padding: 14px 16px; margin-bottom: 14px; background: #fbfdfe; border: 1px solid var(--border); border-radius: 18px; }
+  .question-block.answered { border-left-color: #378ADD; }
+  .question-block.answered.q-1 { border-left-color: #E24B4A; }
+  .question-block.answered.q-2 { border-left-color: #EF9F27; }
+  .question-block.answered.q-3 { border-left-color: #378ADD; }
+  .question-block.answered.q-4 { border-left-color: #639922; }
+  .q-text { font-size: 13px; font-weight: 600; margin: 0 0 10px 0; line-height: 1.5; }
+  .q-num { display: inline-block; background: var(--accent-dark); color: white; width: 18px; height: 18px; border-radius: 50%; text-align: center; line-height: 18px; font-size: 10px; margin-right: 8px; vertical-align: middle; }
+  .q-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .q-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; cursor: pointer; background: white; font-size: 12px; line-height: 1.55; transition: all 0.14s ease; }
+  .q-option:hover { border-color: var(--border-hover); background: var(--surface-soft); }
+  .q-option input { margin-top: 2px; flex-shrink: 0; }
+  .q-option.selected { border-width: 1px; font-weight: 500; }
+  .q-option.selected[data-val="1"] { border-color: #E24B4A; background: #FCEBEB; color: #A32D2D; }
+  .q-option.selected[data-val="2"] { border-color: #EF9F27; background: #FAEEDA; color: #854F0B; }
+  .q-option.selected[data-val="3"] { border-color: #378ADD; background: #E6F1FB; color: #0C447C; }
+  .q-option.selected[data-val="4"] { border-color: #639922; background: #EAF3DE; color: #3B6D11; }
+  .q-val-badge { display: inline-block; width: 22px; height: 22px; border-radius: 8px; text-align: center; line-height: 22px; font-size: 11px; font-weight: 700; flex-shrink: 0; background: var(--accent-soft); color: var(--accent-dark); }
+  .q-evidence { width: 100%; min-height: 46px; font-size: 12px; font-family: var(--font); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; resize: vertical; background: white; color: var(--text); line-height: 1.55; margin-top: 6px; }
+  .q-evidence::placeholder { color: var(--text-tertiary); }
+  .q-evidence:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .q-sources { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; font-style: italic; }
+
+  .trust-block { background: #eef8fc; border-left: 4px solid var(--accent); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; font-size: 12px; color: #2e627f; line-height: 1.65; }
+  .trust-block strong { font-weight: 700; }
+  .justification-block { background: #f8fcfe; border: 1px solid var(--border); border-radius: 16px; padding: 13px 14px; margin-top: 16px; }
+  .justification-block label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px; color: var(--text); }
+  .justification-block textarea { width: 100%; min-height: 52px; font-size: 12px; font-family: var(--font); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; resize: vertical; background: white; color: var(--text); line-height: 1.55; }
+  .justification-block textarea:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .disconfirming-block { background: var(--warm-soft); border: 1px solid rgba(245,139,87,0.20); border-radius: 16px; padding: 13px 14px; margin-top: 10px; }
+  .disconfirming-block label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px; color: #8d522e; }
+  .disconfirming-block textarea { width: 100%; min-height: 46px; font-size: 12px; font-family: var(--font); border: 1px solid rgba(245,139,87,0.34); border-radius: 14px; padding: 10px 12px; resize: vertical; background: white; color: var(--text); line-height: 1.55; }
+
+  .progress-bar { background: var(--border); height: 4px; border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { background: var(--accent); height: 100%; transition: width 0.3s; }
+
+  .actions-row { display: flex; gap: 8px; margin: 28px 38px 0 38px; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .actions-row button, .narrative-actions button, #compare-view button { height: 40px; padding: 0 18px; font-size: 13px; font-family: var(--font); border: 1px solid var(--border); border-radius: 999px; background: white; cursor: pointer; color: var(--text); }
+  .actions-row button:hover, .narrative-actions button:hover, #compare-view button:hover { background: var(--bg-secondary); border-color: var(--border-hover); }
+  .actions-row button.primary { background: var(--accent-dark); color: white; border-color: var(--accent-dark); }
+
+  .narrative-section, .compare-section { margin: 28px 38px 0 38px; padding-top: 20px; border-top: 1px solid var(--border); display: none; }
+  .narrative-section.show, .compare-section.show { display: block; }
+  .narrative-section h2, .compare-section h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px 0; color: var(--accent-dark); }
+  .narrative-body { background: #f5fafc; border: 1px solid var(--border); border-radius: 20px; padding: 20px 22px; font-size: 13px; line-height: 1.75; white-space: pre-wrap; font-family: Menlo, Consolas, monospace; }
+  .narrative-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  #compare-view { padding: 0 38px 0 38px; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .compare-panel { background: white; border: 1px solid var(--border); border-radius: 20px; padding: 16px 18px; box-shadow: var(--shadow-card); }
+  .compare-panel h3 { font-size: 14px; margin: 0 0 8px 0; font-weight: 600; }
+  .compare-panel-meta { font-size: 11px; color: var(--text-secondary); margin: 0 0 10px 0; }
+  .compare-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  .compare-table th { text-align: left; padding: 8px 6px; border-bottom: 0.5px solid var(--border); font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .compare-table td { padding: 8px 6px; border-bottom: 0.5px solid var(--border); }
+  .compare-table td.agree { background: #EAF3DE; color: #3B6D11; }
+  .compare-table td.disagree { background: #FCEBEB; color: #A32D2D; }
+  .compare-table td.partial { background: #FAEEDA; color: #854F0B; }
+  .kappa-box { background: white; border: 1px solid var(--border); padding: 14px 18px; border-radius: 20px; margin-bottom: 14px; display: flex; gap: 16px; box-shadow: var(--shadow-card); }
+  .kappa-box > div { flex: 1; }
+  .kappa-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .kappa-value { font-size: 20px; font-weight: 600; }
+
+  .footer { margin: 40px 38px 0 38px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-tertiary); text-align: center; }
+  details.districts-list { margin: 20px 38px 0 38px; }
+  details.districts-list summary { cursor: pointer; font-size: 13px; color: var(--text-secondary); padding: 8px 0; }
+  .dist-list-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin-top: 8px; }
+  .dist-list-item { background: white; border: 1px solid var(--border); padding: 12px 14px; border-radius: 16px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 14px rgba(15,23,42,0.03); }
+  .dist-list-item button { background: none; border: none; cursor: pointer; color: var(--accent-dark); font-size: 11px; padding: 2px 6px; font-family: var(--font); }
+  .dist-list-item button:hover { text-decoration: underline; }
+
+  @media (max-width: 700px) {
+    .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-left: 18px; margin-right: 18px; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .header { padding-left: 18px; padding-right: 18px; }
+    .toolbar, .mode-toggle, .domain-tabs, .actions-row, .narrative-section, details.districts-list, .footer { margin-left: 18px; margin-right: 18px; }
+    #indicators-container, #compare-view { padding-left: 18px; padding-right: 18px; }
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="eyebrow">District Mental Health Initiative</div>
+    <h1 class="title">District Capacity Scoring Dashboard <span class="version-badge">Auto-score</span></h1>
+    <p class="sub">Use the evidence-anchored response options to score each guiding question. Indicator ratings are computed automatically from your answers, creating a clear and consistent workflow for district capacity review, district comparison, and inter-rater reliability checks.</p>
+  </div>
+
+  <div class="toolbar">
+    <label>District</label>
+    <input type="text" id="district-name" class="dist-input" placeholder="e.g. District 03" />
+    <label>Cohort</label>
+    <select id="cohort">
+      <option value="">—</option>
+      <option value="Cohort 1">Cohort 1</option>
+      <option value="Cohort 2">Cohort 2</option>
+      <option value="Cohort 3">Cohort 3</option>
+    </select>
+    <label>Evaluator</label>
+    <input type="text" id="scorer-name" class="dist-input" placeholder="Your name" style="width: 140px;" />
+    <button id="load-btn" class="primary">Load / Start</button>
+    <button id="reset-btn">Clear form</button>
+    <span class="save-status" id="save-status"></span>
+  </div>
+
+  <div class="mode-toggle">
+    <button id="mode-score" class="active">Score district</button>
+    <button id="mode-compare">Compare evaluators (IRR)</button>
+  </div>
+
+  <div id="score-view">
+    <div class="summary-grid" id="summary-grid"></div>
+    <div class="domain-tabs" id="domain-tabs"></div>
+    <div id="indicators-container"></div>
+
+    <div class="actions-row">
+      <button id="summary-btn" class="primary">Generate capacity narrative</button>
+      <button id="export-json-btn">Export audit trail (JSON)</button>
+      <button id="export-md-btn">Export district report (Markdown)</button>
+      <button id="import-btn">Import JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" />
+    </div>
+
+    <div class="narrative-section" id="narrative-section">
+      <h2>Draft capacity narrative</h2>
+      <div class="narrative-body" id="narrative-body"></div>
+      <div class="narrative-actions">
+        <button id="copy-narrative-btn">Copy to clipboard</button>
+        <button id="close-narrative-btn">Close</button>
+      </div>
+    </div>
+
+    <details class="districts-list" id="districts-details">
+      <summary>Saved districts in this browser</summary>
+      <div class="dist-list-grid" id="districts-list"></div>
+    </details>
+  </div>
+
+  <div id="compare-view" style="display:none;">
+    <h2 style="font-size:18px; font-weight:500; margin:0 0 8px 0;">Compare two evaluator files</h2>
+    <p style="font-size:13px; color:var(--text-secondary); margin: 0 0 16px 0; max-width: 720px; line-height:1.6;">Load two JSON exports from the same district — one per evaluator — to compute agreement and Cohen's kappa at the indicator level. Disagreements are highlighted so you can target your consensus meeting.</p>
+
+    <div class="compare-grid">
+      <div class="compare-panel">
+        <h3>Evaluator A</h3>
+        <button id="load-compare-a">Choose file</button>
+        <input type="file" id="file-compare-a" accept=".json" style="display:none" />
+        <p class="compare-panel-meta" id="meta-a">No file loaded</p>
+      </div>
+      <div class="compare-panel">
+        <h3>Evaluator B</h3>
+        <button id="load-compare-b">Choose file</button>
+        <input type="file" id="file-compare-b" accept=".json" style="display:none" />
+        <p class="compare-panel-meta" id="meta-b">No file loaded</p>
+      </div>
+    </div>
+
+    <div id="compare-results"></div>
+  </div>
+
+  <div class="footer">
+    Data saves to your browser's local storage. Export regularly to preserve your work.
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// RUBRIC v2 — cleaned guiding questions with evidence-anchored answer options
+// Each question has 4 options mapped to Minimal/Emerging/Developing/Integrated.
+// Indicator score = rounded mean of question answers.
+// ============================================================================
+const RUBRIC = {
+  structural: {
+    label: 'Structural',
+    indicators: [
+      {
+        id: 'integrated_practice',
+        name: 'Integrated practice',
+        definition: 'Mental health is woven into core district systems (strategic plan, MTSS, budget, onboarding, improvement cycles) rather than siloed as a program.',
+        questions: [
+          {
+            text: 'Is mental health embedded in the district strategic plan with measurable goals?',
+            sources: 'Strategic plan, board minutes, principal survey',
+            options: [
+              { val: 1, label: 'Not mentioned, or mentioned only as aspirational language' },
+              { val: 2, label: 'Named in the plan but without measurable goals or timelines' },
+              { val: 3, label: 'Named with measurable goals and some timeline references' },
+              { val: 4, label: 'Integrated across multiple strategic priorities with measurable goals, timelines, and named owners' }
+            ]
+          },
+          {
+            text: 'Is MTSS or a comparable tiered framework used to organize mental health supports?',
+            sources: 'Principal survey, site visit observation, district documents',
+            options: [
+              { val: 1, label: 'No tiered framework in use' },
+              { val: 2, label: 'Framework named but inconsistently applied; varies by school' },
+              { val: 3, label: 'Framework used across most schools with defined tiers 1-3' },
+              { val: 4, label: 'Fully operational MTSS with data-informed tier movement across all schools' }
+            ]
+          },
+          {
+            text: 'Does the district budget show sustained, non-grant-dependent investment in mental health?',
+            sources: 'Budget documents, superintendent interview',
+            options: [
+              { val: 1, label: 'No dedicated MH line; funded only through short-term grants or not at all' },
+              { val: 2, label: 'Some general-fund investment but heavily grant-dependent' },
+              { val: 3, label: 'Multi-year general fund investment alongside grants' },
+              { val: 4, label: 'MH has protected, multi-year general fund lines that survive budget cycles' }
+            ]
+          },
+          {
+            text: 'Is mental health included in new-staff onboarding or induction?',
+            sources: 'HR documents, PD calendar, stakeholder interviews',
+            options: [
+              { val: 1, label: 'Not addressed in onboarding' },
+              { val: 2, label: 'Mentioned briefly or inconsistently across new-hire cohorts' },
+              { val: 3, label: 'Required onboarding module on MH for all new staff' },
+              { val: 4, label: 'Required role-differentiated onboarding with follow-up in first year' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'role_clarity',
+        name: 'Role clarity',
+        definition: 'Staff understand their specific responsibilities for student mental health and recognize the limits of their role.',
+        questions: [
+          {
+            text: 'Can staff articulate their role in supporting student mental health without hedging? (JED staff survey item: "I am clear about my role...")',
+            sources: 'JED staff survey, stakeholder interviews',
+            options: [
+              { val: 1, label: 'Fewer than 40% of staff agree; widespread confusion in interviews' },
+              { val: 2, label: '40-59% of staff agree; interviews reveal uneven understanding' },
+              { val: 3, label: '60-74% of staff agree; most can articulate role when asked' },
+              { val: 4, label: '75%+ of staff agree; staff describe role clearly and name its limits' }
+            ]
+          },
+          {
+            text: 'Are there written role descriptions for key positions (counselor, social worker, teacher) regarding MH responsibilities?',
+            sources: 'HR documents, role descriptions, district documents',
+            options: [
+              { val: 1, label: 'No written role descriptions specific to MH' },
+              { val: 2, label: 'Descriptions exist for some roles (e.g. counselors) but not others' },
+              { val: 3, label: 'Written descriptions exist for most relevant roles' },
+              { val: 4, label: 'Role descriptions exist, align across roles, and are reviewed regularly' }
+            ]
+          },
+          {
+            text: 'Do staff know who to refer students to, and when? (JED staff survey item: "I know where to refer a student...")',
+            sources: 'JED staff survey, site visit observation',
+            options: [
+              { val: 1, label: 'Fewer than 40% agree; no clear referral pathway named' },
+              { val: 2, label: '40-59% agree; pathway known in some buildings not others' },
+              { val: 3, label: '60-74% agree; consistent pathway across most schools' },
+              { val: 4, label: '75%+ agree; pathway is consistent, documented, and students know it too' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'synchrony_of_roles',
+        name: 'Synchrony of roles',
+        definition: 'Roles coordinate through structured routines — teaming, handoffs, shared referral pathways — rather than informal workarounds.',
+        questions: [
+          {
+            text: 'Are there standing teaming structures (student support teams, wellness committees, MTSS teams) that meet regularly?',
+            sources: 'Meeting agendas, site visit observation, stakeholder interviews',
+            options: [
+              { val: 1, label: 'No standing teams; coordination happens ad hoc' },
+              { val: 2, label: 'Teams exist in some schools but meet irregularly' },
+              { val: 3, label: 'Standing teams in most schools meeting on a regular cadence' },
+              { val: 4, label: 'Teams in every school meet on documented cadence with clear charters' }
+            ]
+          },
+          {
+            text: 'How consistent are referral pathways across schools in the district?',
+            sources: 'Site visit observation, stakeholder interviews, district documents',
+            options: [
+              { val: 1, label: 'Pathways vary widely by school or depend on individual relationships' },
+              { val: 2, label: 'Some shared elements but significant variation across schools' },
+              { val: 3, label: 'Largely consistent pathway with minor variation by level' },
+              { val: 4, label: 'Fully consistent pathway documented and followed across all schools' }
+            ]
+          },
+          {
+            text: 'Is there structured communication between classroom staff and school-based MH professionals? (JED staff survey)',
+            sources: 'JED staff survey, stakeholder interviews',
+            options: [
+              { val: 1, label: 'Fewer than 40% agree communication is structured' },
+              { val: 2, label: '40-59% agree; structure exists but is inconsistent' },
+              { val: 3, label: '60-74% agree; regular communication routines in place' },
+              { val: 4, label: '75%+ agree; structured, routine, bidirectional communication' }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  functional: {
+    label: 'Functional',
+    indicators: [
+      {
+        id: 'adaptation',
+        name: 'Adaptation',
+        definition: 'District uses data to evaluate programs and adjust in response to evidence rather than reactive crisis response.',
+        questions: [
+          {
+            text: 'Does the district regularly evaluate MH programs and adjust based on findings? Include specific examples of programs modified or sunset based on evidence.',
+            sources: 'Evaluation reports, superintendent interview, dashboard data',
+            options: [
+              { val: 1, label: 'No program evaluation; changes driven by crisis or leadership preference' },
+              { val: 2, label: 'Some evaluation but rarely connected to program decisions' },
+              { val: 3, label: 'Regular evaluation with documented adjustments to programs' },
+              { val: 4, label: 'Systematic evaluation cycle with documented sunset/modification decisions' }
+            ]
+          },
+          {
+            text: 'Is there a clear feedback loop from schools to district to action (e.g., school reports a need → district responds with resources or adjustment)?',
+            sources: 'Stakeholder interviews, meeting minutes, email/communication records',
+            options: [
+              { val: 1, label: 'No documented feedback loop; schools operate independently' },
+              { val: 2, label: 'Feedback flows up but rarely produces visible action' },
+              { val: 3, label: 'Feedback loop functions in most cases with reasonable response time' },
+              { val: 4, label: 'Formalized feedback loop with tracked response times and closure' }
+            ]
+          },
+          {
+            text: 'How does the district respond when data reveals a gap or program failure?',
+            sources: 'Superintendent interview, board minutes, stakeholder interviews',
+            options: [
+              { val: 1, label: 'Defensive or minimizes the gap; seeks to protect reputation' },
+              { val: 2, label: 'Acknowledges the gap but slow or partial response' },
+              { val: 3, label: 'Openly names the gap and develops action plan' },
+              { val: 4, label: 'Transparent response with clear action, accountability, and follow-up' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'commitment',
+        name: 'Commitment',
+        definition: 'Mental health is reflected in budget, time, leadership attention, and is sustained across leadership transitions.',
+        questions: [
+          {
+            text: 'Is mental health named as a district priority in public communication (website, board statements, superintendent messages)?',
+            sources: 'Website review, board minutes, public statements',
+            options: [
+              { val: 1, label: 'Not mentioned in public communication' },
+              { val: 2, label: 'Occasional mention in reactive contexts (e.g., crisis response)' },
+              { val: 3, label: 'Regularly named as a priority in proactive communication' },
+              { val: 4, label: 'Prominent, sustained public priority across multiple channels and contexts' }
+            ]
+          },
+          {
+            text: 'Has MH priority been sustained across leadership transitions (e.g., superintendent or board changes)?',
+            sources: 'Board minutes, historical documents, stakeholder interviews',
+            options: [
+              { val: 1, label: 'Unknown or there have been no transitions to test this' },
+              { val: 2, label: 'Priority weakened notably during past transitions' },
+              { val: 3, label: 'Priority maintained through at least one transition' },
+              { val: 4, label: 'Priority institutionalized; survives transitions with minimal disruption' }
+            ]
+          },
+          {
+            text: 'Is funding for mental health diversified (general fund + grants + partnerships) rather than single-source?',
+            sources: 'Budget documents, superintendent interview',
+            options: [
+              { val: 1, label: 'Single source (usually one grant); vulnerable if funding ends' },
+              { val: 2, label: 'Two sources but one dominates heavily' },
+              { val: 3, label: 'Three or more sources with reasonable balance' },
+              { val: 4, label: 'Diversified funding strategy documented with sustainability plan' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'staff_training',
+        name: 'Staff training',
+        definition: 'Training is ongoing, role-specific, embedded in professional learning cycles, not episodic one-off events.',
+        questions: [
+          {
+            text: 'Is annual mental health training required for all staff (not just counselors)?',
+            sources: 'PD records, training calendar, HR documents',
+            options: [
+              { val: 1, label: 'No required MH training for general staff' },
+              { val: 2, label: 'One-time training at hire; no annual requirement' },
+              { val: 3, label: 'Annual training required for all staff' },
+              { val: 4, label: 'Annual training required with documented completion tracking' }
+            ]
+          },
+          {
+            text: 'Is training differentiated by role (teachers, counselors, admins, support staff)?',
+            sources: 'PD records, training materials, stakeholder interviews',
+            options: [
+              { val: 1, label: 'Training is one-size-fits-all or nonexistent' },
+              { val: 2, label: 'Counselors get specialized training; others get generic content' },
+              { val: 3, label: 'Training differentiated across at least three role groups' },
+              { val: 4, label: 'Fully role-differentiated training with role-specific competencies' }
+            ]
+          },
+          {
+            text: 'Does training cover the full cycle: recognition, referral, and crisis response?',
+            sources: 'Training materials, PD agendas',
+            options: [
+              { val: 1, label: 'Training addresses only one area (typically crisis)' },
+              { val: 2, label: 'Covers two of the three areas' },
+              { val: 3, label: 'Covers all three but depth varies' },
+              { val: 4, label: 'All three areas covered with depth; skills practiced not just described' }
+            ]
+          },
+          {
+            text: 'Do staff report feeling prepared to recognize and support student MH needs? (JED staff survey)',
+            sources: 'JED staff survey',
+            options: [
+              { val: 1, label: 'Fewer than 40% agree they feel prepared' },
+              { val: 2, label: '40-59% agree' },
+              { val: 3, label: '60-74% agree' },
+              { val: 4, label: '75%+ agree they feel prepared' }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  relational: {
+    label: 'Relational',
+    indicators: [
+      {
+        id: 'trust',
+        name: 'Trust',
+        definition: 'Bryk and Schneider\'s four facets of relational trust: respect, competence, personal regard, and integrity — observed across staff, students, and families. Because JED instruments underspecify relational trust, this indicator requires localized data.',
+        localData: 'Localized trust data required. JED instruments underspecify relational trust. Pull from: district climate survey, teacher retention (3-yr) and exit interview themes, family engagement or school perception surveys, student voice or youth advisory input, pattern analysis of grievances or union feedback, and direct interview prompts mapped to the four Bryk & Schneider facets.',
+        questions: [
+          {
+            text: 'RESPECT — Do staff feel heard and respected by district leadership? (Pull from district climate survey or staff perception data)',
+            sources: 'District climate survey, staff exit interview themes, stakeholder interviews',
+            options: [
+              { val: 1, label: 'Fewer than 40% of staff agree; exit interviews cite disrespect as theme' },
+              { val: 2, label: '40-59% agree; mixed perceptions across roles' },
+              { val: 3, label: '60-74% agree; respect evident in most interactions' },
+              { val: 4, label: '75%+ agree; respect consistently cited in interviews as defining feature' }
+            ]
+          },
+          {
+            text: 'COMPETENCE — Do staff trust that district leaders know what they are doing on MH?',
+            sources: 'Stakeholder interviews, climate survey, exit interview themes',
+            options: [
+              { val: 1, label: 'Staff openly question leadership competence on MH' },
+              { val: 2, label: 'Mixed; some confidence, significant doubts' },
+              { val: 3, label: 'Most staff trust leadership competence on MH' },
+              { val: 4, label: 'High confidence; staff cite specific competent actions' }
+            ]
+          },
+          {
+            text: 'PERSONAL REGARD — Do leaders extend beyond formal role? Is there evidence of care (e.g., leaders show up at schools, follow up personally, know staff by name)?',
+            sources: 'Stakeholder interviews, site visit observation',
+            options: [
+              { val: 1, label: 'Leaders are distant; formal interactions only' },
+              { val: 2, label: 'Some leaders extend beyond role; inconsistent' },
+              { val: 3, label: 'Leaders generally show personal regard in visible ways' },
+              { val: 4, label: 'Personal regard is culturally modeled and widely experienced' }
+            ]
+          },
+          {
+            text: 'INTEGRITY — Do words and actions align? Are commitments kept?',
+            sources: 'Stakeholder interviews, board minutes (promised vs delivered), staff retention data',
+            options: [
+              { val: 1, label: 'Staff cite specific broken commitments; credibility eroded' },
+              { val: 2, label: 'Some follow-through but notable gaps' },
+              { val: 3, label: 'Generally follow through on commitments' },
+              { val: 4, label: 'High integrity: commitments are tracked and kept, or explicitly renegotiated' }
+            ]
+          },
+          {
+            text: 'Do students report a good support system at school? (JED student survey)',
+            sources: 'JED student survey, youth voice data',
+            options: [
+              { val: 1, label: 'Fewer than 50% of students agree' },
+              { val: 2, label: '50-64% agree' },
+              { val: 3, label: '65-79% agree' },
+              { val: 4, label: '80%+ agree they have a good support system at school' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'communication',
+        name: 'Communication',
+        definition: 'Information flows bidirectionally — district to schools, schools to district, schools to families — with feedback loops and transparent data sharing.',
+        questions: [
+          {
+            text: 'Are mental health resources communicated clearly to families and students in multiple languages and formats?',
+            sources: 'Website review, family materials, communications audit',
+            options: [
+              { val: 1, label: 'No clear communication of MH resources to families' },
+              { val: 2, label: 'Basic English-only materials; passive (website only)' },
+              { val: 3, label: 'Multi-language materials and multiple channels used' },
+              { val: 4, label: 'Comprehensive multi-language, multi-channel communication with feedback mechanisms' }
+            ]
+          },
+          {
+            text: 'Is there two-way communication between district and schools on mental health (not just top-down directives)?',
+            sources: 'Stakeholder interviews, meeting structures, communications audit',
+            options: [
+              { val: 1, label: 'Communication is top-down; no mechanism for school input' },
+              { val: 2, label: 'Occasional input opportunities but rarely acted on' },
+              { val: 3, label: 'Regular two-way channels with visible responsiveness' },
+              { val: 4, label: 'Structured two-way communication with documented response cycles' }
+            ]
+          },
+          {
+            text: 'Is district data on mental health shared transparently with stakeholders (staff, families, community)?',
+            sources: 'Board presentations, public dashboards, communications review',
+            options: [
+              { val: 1, label: 'Data not shared externally; internal use only if at all' },
+              { val: 2, label: 'Data shared only when required or under pressure' },
+              { val: 3, label: 'Regular public reporting on MH indicators' },
+              { val: 4, label: 'Proactive transparent reporting with narrative context and action plans' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'interdependence',
+        name: 'Interdependence',
+        definition: 'Staff share responsibility for student wellbeing across roles; collaboration is the norm rather than the exception.',
+        questions: [
+          {
+            text: 'Do staff describe mental health as everyone\'s work, or as the counselor\'s work?',
+            sources: 'Stakeholder interviews, JED staff survey',
+            options: [
+              { val: 1, label: 'Clearly framed as "the counselor\'s job" by most staff' },
+              { val: 2, label: 'Mixed; some shared responsibility language' },
+              { val: 3, label: 'Most staff describe MH as shared responsibility' },
+              { val: 4, label: 'Universally framed as shared; staff cite specific cross-role examples' }
+            ]
+          },
+          {
+            text: 'Are there structured collaboration routines for cross-role problem-solving (e.g., teachers with counselors, admins with social workers)?',
+            sources: 'Meeting structures, PLC agendas, stakeholder interviews',
+            options: [
+              { val: 1, label: 'No structured cross-role collaboration' },
+              { val: 2, label: 'Occasional cross-role meetings; ad hoc' },
+              { val: 3, label: 'Regular cross-role routines in most schools' },
+              { val: 4, label: 'Institutionalized cross-role routines in every school with clear purpose' }
+            ]
+          },
+          {
+            text: 'Is there peer support culture among staff (not just student peer support)?',
+            sources: 'Stakeholder interviews, staff wellness programs, climate survey',
+            options: [
+              { val: 1, label: 'No visible peer support structures for staff' },
+              { val: 2, label: 'Informal peer support in some buildings' },
+              { val: 3, label: 'Some formal staff peer support structures (e.g., buddy systems, debrief)' },
+              { val: 4, label: 'Robust peer support culture with formal and informal elements across district' }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  governance: {
+    label: 'Governance',
+    indicators: [
+      {
+        id: 'policy_alignment',
+        name: 'Policy alignment',
+        definition: 'Board policies, MOUs, and written procedures formalize MH commitments and align across schools.',
+        questions: [
+          {
+            text: 'Are there written, current policies on suicide prevention and mental health crisis response?',
+            sources: 'Policy review, board minutes',
+            options: [
+              { val: 1, label: 'No written policies or policies are badly out of date' },
+              { val: 2, label: 'Policies exist but not current (>5 years since review)' },
+              { val: 3, label: 'Current policies reviewed within last 3 years' },
+              { val: 4, label: 'Current policies reviewed on documented cycle (annual or biennial)' }
+            ]
+          },
+          {
+            text: 'Are MOUs with community mental health providers active, reviewed, and integrated with district practice?',
+            sources: 'MOU documents, stakeholder interviews, board minutes',
+            options: [
+              { val: 1, label: 'No MOUs with community providers' },
+              { val: 2, label: 'MOUs exist but are outdated or loosely implemented' },
+              { val: 3, label: 'Active MOUs with defined roles and regular review' },
+              { val: 4, label: 'Multiple active MOUs, reviewed annually, with data sharing agreements' }
+            ]
+          },
+          {
+            text: 'Are policies applied consistently across schools, or do practices vary significantly?',
+            sources: 'Site visit observation, principal survey, stakeholder interviews',
+            options: [
+              { val: 1, label: 'Significant variation; policies exist on paper only' },
+              { val: 2, label: 'Uneven application; some schools fully implement, others do not' },
+              { val: 3, label: 'Largely consistent implementation with minor variation' },
+              { val: 4, label: 'Fully consistent implementation monitored by district' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'accountability_systems',
+        name: 'Accountability systems',
+        definition: 'District monitors implementation through data — not just compliance checkboxes — and uses results for course correction.',
+        questions: [
+          {
+            text: 'Is mental health / wellbeing data collected on a regular cadence?',
+            sources: 'Dashboard data, data systems review',
+            options: [
+              { val: 1, label: 'No regular MH data collection' },
+              { val: 2, label: 'Ad hoc collection; no standard cadence' },
+              { val: 3, label: 'Annual data collection with basic indicators' },
+              { val: 4, label: 'Multi-source, multi-cadence data collection (pulse + annual + longitudinal)' }
+            ]
+          },
+          {
+            text: 'Does the district report on implementation progress (not just outcomes) to the board and community?',
+            sources: 'Board presentations, reports, dashboards',
+            options: [
+              { val: 1, label: 'No implementation reporting; only outcome measures if any' },
+              { val: 2, label: 'Occasional implementation updates' },
+              { val: 3, label: 'Regular implementation progress reports' },
+              { val: 4, label: 'Structured implementation dashboard with regular public reporting' }
+            ]
+          },
+          {
+            text: 'Are implementation barriers actively monitored and addressed at the district level?',
+            sources: 'Meeting minutes, stakeholder interviews, superintendent interview',
+            options: [
+              { val: 1, label: 'Barriers not surfaced or tracked at district level' },
+              { val: 2, label: 'Barriers identified but rarely addressed systematically' },
+              { val: 3, label: 'Barriers tracked and addressed with some regularity' },
+              { val: 4, label: 'Systematic barrier-tracking process with documented resolution cycle' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'leadership_commitment',
+        name: 'Leadership commitment',
+        definition: 'Superintendent and cabinet visibly prioritize MH, empower staff, and take concrete action — beyond stated support.',
+        questions: [
+          {
+            text: 'Does the superintendent speak publicly about mental health (board meetings, community events, op-eds)?',
+            sources: 'Board minutes, public communications, press',
+            options: [
+              { val: 1, label: 'Rarely or never speaks publicly about MH' },
+              { val: 2, label: 'Occasional mentions in routine contexts' },
+              { val: 3, label: 'Regular public advocacy on MH' },
+              { val: 4, label: 'Sustained, proactive public leadership on MH across multiple venues' }
+            ]
+          },
+          {
+            text: 'Is there cabinet-level mental health leadership (e.g., a senior district leader whose portfolio includes MH)?',
+            sources: 'Org chart, cabinet meeting agendas, HR documents',
+            options: [
+              { val: 1, label: 'No cabinet-level owner for MH' },
+              { val: 2, label: 'MH is a small piece of a larger portfolio (e.g., "student services")' },
+              { val: 3, label: 'Named cabinet leader with significant MH responsibility' },
+              { val: 4, label: 'Dedicated cabinet role for MH/wellbeing with staff and budget authority' }
+            ]
+          },
+          {
+            text: 'Are mental health leaders empowered to make decisions and invest resources without requiring escalation?',
+            sources: 'Stakeholder interviews, decision records',
+            options: [
+              { val: 1, label: 'MH leaders require extensive escalation for any decision' },
+              { val: 2, label: 'Limited authority; most decisions escalated' },
+              { val: 3, label: 'Substantive decision-making authority within defined scope' },
+              { val: 4, label: 'Full decision-making authority with accountability structures in place' }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+};
+
+const SCORE_LABELS = {
+  1: 'Minimal',
+  2: 'Emerging',
+  3: 'Developing',
+  4: 'Integrated'
+};
+
+// ============================================================================
+// STATE
+// ============================================================================
+let state = {
+  district: '',
+  cohort: '',
+  scorer: '',
+  answers: {},   // { questionKey: { val, evidence } }  where key = "indId:qIdx"
+  disconfirming: {},  // { indId: text }
+  justification: {}, // { indId: text }
+  lastSaved: null,
+  createdAt: null,
+  rubricVersion: '2.0'
+};
+let currentDomain = 'structural';
+let saveTimer = null;
+let currentMode = 'score';
+
+function storageKey(district) { return 'dca_v2_' + district.replace(/\s+/g, '_'); }
+function qKey(indId, qIdx) { return indId + ':' + qIdx; }
+
+function saveState() {
+  if (!state.district || state.district.trim() === '') {
+    document.getElementById('save-status').textContent = 'Enter district name to save';
+    return;
+  }
+  try {
+    if (!state.createdAt) state.createdAt = new Date().toISOString();
+    state.lastSaved = new Date().toISOString();
+    localStorage.setItem(storageKey(state.district), JSON.stringify(state));
+    const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    document.getElementById('save-status').textContent = 'Saved ' + t;
+    refreshDistrictsList();
+  } catch (e) {
+    document.getElementById('save-status').textContent = 'Save error: ' + e.message;
+  }
+}
+
+function debouncedSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 600);
+}
+
+function loadDistrict() {
+  const district = document.getElementById('district-name').value.trim();
+  if (!district) { alert('Enter a district name to load or start scoring.'); return; }
+  try {
+    const raw = localStorage.getItem(storageKey(district));
+    if (raw) {
+      state = JSON.parse(raw);
+      if (!state.answers) state.answers = {};
+      if (!state.disconfirming) state.disconfirming = {};
+      if (!state.justification) state.justification = {};
+      document.getElementById('district-name').value = state.district;
+      document.getElementById('cohort').value = state.cohort || '';
+      document.getElementById('scorer-name').value = state.scorer || '';
+      document.getElementById('save-status').textContent = 'Loaded existing district';
+    } else {
+      state = {
+        district,
+        cohort: document.getElementById('cohort').value,
+        scorer: document.getElementById('scorer-name').value,
+        answers: {},
+        disconfirming: {},
+        justification: {},
+        lastSaved: null,
+        createdAt: new Date().toISOString(),
+        rubricVersion: '2.0'
+      };
+      document.getElementById('save-status').textContent = 'Started new district';
+      saveState();
+    }
+    renderAll();
+  } catch (e) {
+    alert('Error loading district: ' + e.message);
+  }
+}
+
+function resetForm() {
+  if (state.district && !confirm('Clear the form? Data for ' + state.district + ' is saved in browser storage and can be reloaded.')) return;
+  state = { district: '', cohort: '', scorer: '', answers: {}, disconfirming: {}, justification: {}, lastSaved: null, createdAt: null, rubricVersion: '2.0' };
+  document.getElementById('district-name').value = '';
+  document.getElementById('cohort').value = '';
+  document.getElementById('scorer-name').value = '';
+  document.getElementById('save-status').textContent = '';
+  renderAll();
+}
+
+// ============================================================================
+// AUTO-SCORING LOGIC
+// Indicator score = rounded mean of answered questions
+// Must have at least 2 answered questions to generate indicator score
+// Domain score = mean of indicator scores (only indicators that have scores)
+// ============================================================================
+function getIndicatorScore(ind) {
+  const answers = ind.questions.map((q, idx) => {
+    const a = state.answers[qKey(ind.id, idx)];
+    return a && a.val ? a.val : null;
+  }).filter(v => v !== null);
+
+  if (answers.length < 2) return { score: null, answered: answers.length, total: ind.questions.length, mean: null };
+
+  const mean = answers.reduce((s, v) => s + v, 0) / answers.length;
+  return {
+    score: Math.round(mean),
+    answered: answers.length,
+    total: ind.questions.length,
+    mean: mean.toFixed(2),
+    complete: answers.length === ind.questions.length
+  };
+}
+
+function computeSummary() {
+  const all = Object.values(RUBRIC).flatMap(d => d.indicators);
+  const scored = all.map(ind => ({ ind, ...getIndicatorScore(ind) })).filter(x => x.score !== null);
+
+  const total = scored.reduce((s, x) => s + x.score, 0);
+  const avg = scored.length > 0 ? (total / scored.length) : 0;
+
+  const domainScores = {};
+  for (const [key, domain] of Object.entries(RUBRIC)) {
+    const ds = domain.indicators.map(ind => getIndicatorScore(ind)).filter(x => x.score !== null);
+    const t = ds.reduce((s, x) => s + x.score, 0);
+    domainScores[key] = {
+      label: domain.label,
+      avg: ds.length > 0 ? (t / ds.length) : 0,
+      count: ds.length,
+      total: domain.indicators.length
+    };
+  }
+
+  const affirmativeCount = scored.filter(x => x.score >= 3).length;
+
+  // Count total answered questions
+  const totalQuestions = all.reduce((s, ind) => s + ind.questions.length, 0);
+  const answeredQuestions = all.reduce((s, ind) => s + ind.questions.filter((q, i) => state.answers[qKey(ind.id, i)]?.val).length, 0);
+
+  return {
+    indicatorsScored: scored.length,
+    indicatorsTotal: all.length,
+    overallAvg: avg.toFixed(2),
+    affirmative: affirmativeCount,
+    affirmativeStr: affirmativeCount + '/' + all.length,
+    domainScores,
+    questionsAnswered: answeredQuestions,
+    questionsTotal: totalQuestions
+  };
+}
+
+// ============================================================================
+// RENDERING
+// ============================================================================
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderSummary() {
+  const s = computeSummary();
+  const pct = s.questionsTotal > 0 ? Math.round(100 * s.questionsAnswered / s.questionsTotal) : 0;
+  const cards = [
+    { label: 'Questions answered', value: s.questionsAnswered + '/' + s.questionsTotal, sub: pct + '% complete' },
+    { label: 'Indicators scored', value: s.indicatorsScored + '/' + s.indicatorsTotal, sub: 'auto-generated from answers' },
+    { label: 'Overall mean', value: s.overallAvg, sub: 'across scored indicators' },
+    { label: 'Affirmative (≥3)', value: s.affirmativeStr, sub: 'developing or integrated' }
+  ];
+  document.getElementById('summary-grid').innerHTML = cards.map(c =>
+    '<div class="metric"><p class="metric-label">' + c.label + '</p><p class="metric-value">' + c.value + '</p><p class="metric-sub">' + c.sub + '</p></div>'
+  ).join('');
+}
+
+function renderDomainTabs() {
+  const s = computeSummary();
+  const el = document.getElementById('domain-tabs');
+  el.innerHTML = Object.entries(RUBRIC).map(([key, domain]) => {
+    const ds = s.domainScores[key];
+    const meta = ds.count + '/' + ds.total + (ds.count > 0 ? ' · avg ' + ds.avg.toFixed(1) : '');
+    return '<button class="dtab ' + (currentDomain === key ? 'active' : '') + '" data-dkey="' + key + '">' +
+           domain.label + '<span class="dtab-meta">' + meta + '</span></button>';
+  }).join('');
+  el.querySelectorAll('.dtab').forEach(b => {
+    b.onclick = () => {
+      currentDomain = b.dataset.dkey;
+      renderDomainTabs();
+      renderIndicators();
+    };
+  });
+}
+
+function renderIndicators() {
+  const container = document.getElementById('indicators-container');
+  const domain = RUBRIC[currentDomain];
+
+  container.innerHTML = domain.indicators.map(ind => {
+    const scoreInfo = getIndicatorScore(ind);
+    const trustBlock = ind.localData
+      ? '<div class="trust-block"><strong>Localized trust data required.</strong> ' + ind.localData + '</div>'
+      : '';
+
+    const scoreDisplay = scoreInfo.score !== null
+      ? '<div class="ind-score-display scored sc-' + scoreInfo.score + '"><span class="ind-score-label">Auto-computed score (' + scoreInfo.answered + '/' + scoreInfo.total + ' questions answered, mean ' + scoreInfo.mean + ')</span><span class="ind-score-val">' + scoreInfo.score + ' · ' + SCORE_LABELS[scoreInfo.score] + '</span></div>'
+      : '<div class="ind-score-display"><span class="ind-score-label">Score pending — answer at least 2 questions</span><span class="ind-score-val">' + scoreInfo.answered + '/' + scoreInfo.total + '</span></div>';
+
+    const questionsHtml = ind.questions.map((q, qIdx) => {
+      const answer = state.answers[qKey(ind.id, qIdx)] || {};
+      const answered = answer.val ? 'answered q-' + answer.val : '';
+
+      const optionsHtml = q.options.map(opt => {
+        const sel = answer.val === opt.val ? 'selected' : '';
+        return '<label class="q-option ' + sel + '" data-val="' + opt.val + '">' +
+          '<input type="radio" name="q-' + ind.id + '-' + qIdx + '" value="' + opt.val + '" ' + (answer.val === opt.val ? 'checked' : '') + ' />' +
+          '<span class="q-val-badge">' + opt.val + '</span>' +
+          '<span>' + escapeHtml(opt.label) + '</span>' +
+        '</label>';
+      }).join('');
+
+      return '<div class="question-block ' + answered + '" data-ind="' + ind.id + '" data-qidx="' + qIdx + '">' +
+        '<p class="q-text"><span class="q-num">' + (qIdx + 1) + '</span>' + escapeHtml(q.text) + '</p>' +
+        '<div class="q-options">' + optionsHtml + '</div>' +
+        '<textarea class="q-evidence" data-ind="' + ind.id + '" data-qidx="' + qIdx + '" placeholder="Evidence or notes supporting this answer (recommended)...">' + escapeHtml(answer.evidence || '') + '</textarea>' +
+        '<p class="q-sources">Evidence sources: ' + escapeHtml(q.sources) + '</p>' +
+      '</div>';
+    }).join('');
+
+    return '<div class="indicator-card" id="card-' + ind.id + '">' +
+      '<div class="ind-header"><p class="ind-name">' + ind.name + '</p><span class="ind-tag">' + domain.label + '</span></div>' +
+      '<p class="ind-defn">' + ind.definition + '</p>' +
+      trustBlock +
+      scoreDisplay +
+      '<p class="section-label">Guiding questions — score auto-computed from your answers</p>' +
+      questionsHtml +
+      '<div class="disconfirming-block"><label>Disconfirming evidence — what did you find that pushes against this computed score?</label>' +
+      '<textarea data-ind="' + ind.id + '" data-field="disconfirming" placeholder="e.g. Survey data supported a 3 but interviews revealed this was true in only 2 schools...">' + escapeHtml(state.disconfirming[ind.id] || '') + '</textarea></div>' +
+      '<div class="justification-block"><label>Scoring justification — why this score holds up, and where the strongest evidence sits</label>' +
+      '<textarea data-ind="' + ind.id + '" data-field="justification" placeholder="Summarize the reasoning. Name the strongest evidence. Acknowledge tensions.">' + escapeHtml(state.justification[ind.id] || '') + '</textarea></div>' +
+    '</div>';
+  }).join('');
+
+  attachIndicatorEvents();
+}
+
+// ----------------------------------------------------------------------------
+// Surgical UI updates — do NOT re-render the whole container while typing.
+// ----------------------------------------------------------------------------
+function updateIndicatorScoreDisplay(indId) {
+  const ind = findIndicator(indId);
+  if (!ind) return;
+  const card = document.getElementById('card-' + indId);
+  if (!card) return;
+  const scoreInfo = getIndicatorScore(ind);
+  const display = card.querySelector('.ind-score-display');
+  if (!display) return;
+  if (scoreInfo.score !== null) {
+    display.className = 'ind-score-display scored sc-' + scoreInfo.score;
+    display.innerHTML = '<span class="ind-score-label">Auto-computed score (' + scoreInfo.answered + '/' + scoreInfo.total + ' questions answered, mean ' + scoreInfo.mean + ')</span><span class="ind-score-val">' + scoreInfo.score + ' · ' + SCORE_LABELS[scoreInfo.score] + '</span>';
+  } else {
+    display.className = 'ind-score-display';
+    display.innerHTML = '<span class="ind-score-label">Score pending — answer at least 2 questions</span><span class="ind-score-val">' + scoreInfo.answered + '/' + scoreInfo.total + '</span>';
+  }
+}
+
+function findIndicator(indId) {
+  for (const domain of Object.values(RUBRIC)) {
+    const found = domain.indicators.find(i => i.id === indId);
+    if (found) return found;
+  }
+  return null;
+}
+
+function attachIndicatorEvents() {
+  // Radio button answer changes — update state, update score display, do NOT re-render
+  document.querySelectorAll('input[type="radio"][name^="q-"]').forEach(radio => {
+    radio.addEventListener('change', e => {
+      const parts = e.target.name.match(/^q-(.+)-(\d+)$/);
+      if (!parts) return;
+      const indId = parts[1];
+      const qIdx = parseInt(parts[2]);
+      const val = parseInt(e.target.value);
+      const key = qKey(indId, qIdx);
+      if (!state.answers[key]) state.answers[key] = { val: null, evidence: '' };
+      state.answers[key].val = val;
+
+      // Update the visual selection of option labels for this question
+      const card = document.getElementById('card-' + indId);
+      if (card) {
+        const qBlock = card.querySelector('.question-block[data-ind="' + indId + '"][data-qidx="' + qIdx + '"]');
+        if (qBlock) {
+          qBlock.classList.remove('answered', 'q-1', 'q-2', 'q-3', 'q-4');
+          qBlock.classList.add('answered', 'q-' + val);
+          qBlock.querySelectorAll('.q-option').forEach(opt => {
+            opt.classList.toggle('selected', parseInt(opt.dataset.val) === val);
+          });
+        }
+      }
+
+      updateIndicatorScoreDisplay(indId);
+      renderSummary();
+      renderDomainTabs();
+      debouncedSave();
+    });
+  });
+
+  // Evidence textarea — update state only, do NOT re-render
+  document.querySelectorAll('.q-evidence').forEach(ta => {
+    ta.addEventListener('input', e => {
+      const indId = e.target.dataset.ind;
+      const qIdx = parseInt(e.target.dataset.qidx);
+      const key = qKey(indId, qIdx);
+      if (!state.answers[key]) state.answers[key] = { val: null, evidence: '' };
+      state.answers[key].evidence = e.target.value;
+      debouncedSave();
+    });
+  });
+
+  // Disconfirming / justification textareas — update state only, do NOT re-render
+  document.querySelectorAll('textarea[data-field]').forEach(ta => {
+    ta.addEventListener('input', e => {
+      const indId = e.target.dataset.ind;
+      const field = e.target.dataset.field;
+      if (field === 'disconfirming') state.disconfirming[indId] = e.target.value;
+      else if (field === 'justification') state.justification[indId] = e.target.value;
+      debouncedSave();
+    });
+  });
+}
+
+function renderAll() {
+  renderSummary();
+  renderDomainTabs();
+  renderIndicators();
+}
+
+// ============================================================================
+// EXPORT / IMPORT
+// ============================================================================
+function buildPayload() {
+  const summary = computeSummary();
+  const indicators = {};
+  for (const [key, domain] of Object.entries(RUBRIC)) {
+    domain.indicators.forEach(ind => {
+      const scoreInfo = getIndicatorScore(ind);
+      const questionDetails = ind.questions.map((q, qIdx) => {
+        const a = state.answers[qKey(ind.id, qIdx)] || {};
+        return {
+          text: q.text,
+          sources: q.sources,
+          answer: a.val || null,
+          answerLabel: a.val ? q.options.find(o => o.val === a.val)?.label : null,
+          evidence: a.evidence || ''
+        };
+      });
+      indicators[ind.id] = {
+        domain: domain.label,
+        name: ind.name,
+        score: scoreInfo.score,
+        scoreLabel: scoreInfo.score ? SCORE_LABELS[scoreInfo.score] : null,
+        mean: scoreInfo.mean,
+        questionsAnswered: scoreInfo.answered,
+        questionsTotal: scoreInfo.total,
+        questions: questionDetails,
+        disconfirming: state.disconfirming[ind.id] || '',
+        justification: state.justification[ind.id] || ''
+      };
+    });
+  }
+  return {
+    district: state.district,
+    cohort: state.cohort,
+    scorer: state.scorer,
+    rubricVersion: state.rubricVersion || '2.0',
+    createdAt: state.createdAt,
+    exportedAt: new Date().toISOString(),
+    summary: {
+      indicatorsScored: summary.indicatorsScored,
+      indicatorsTotal: summary.indicatorsTotal,
+      overallMean: summary.overallAvg,
+      affirmativeCount: summary.affirmative,
+      affirmativeTotal: summary.indicatorsTotal,
+      questionsAnswered: summary.questionsAnswered,
+      questionsTotal: summary.questionsTotal,
+      domainScores: summary.domainScores
+    },
+    indicators
+  };
+}
+
+function exportJSON() {
+  if (!state.district) { alert('Load or start a district first.'); return; }
+  const payload = buildPayload();
+  downloadFile(JSON.stringify(payload, null, 2),
+    'dca_audit_' + state.district.replace(/\s+/g, '_') + '_' + (state.scorer || 'scorer').replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0,10) + '.json',
+    'application/json');
+}
+
+function exportMarkdown() {
+  if (!state.district) { alert('Load or start a district first.'); return; }
+  const p = buildPayload();
+  let md = '# ' + p.district + ' Capacity Report\n\n';
+  md += '**Cohort:** ' + (p.cohort || 'n/a') + '  \n';
+  md += '**Evaluator:** ' + (p.scorer || 'n/a') + '  \n';
+  md += '**Rubric version:** ' + p.rubricVersion + '  \n';
+  md += '**Export date:** ' + new Date(p.exportedAt).toLocaleDateString() + '  \n\n';
+  md += '## Summary\n\n';
+  md += '- Questions answered: ' + p.summary.questionsAnswered + '/' + p.summary.questionsTotal + '\n';
+  md += '- Indicators scored: ' + p.summary.indicatorsScored + '/' + p.summary.indicatorsTotal + '\n';
+  md += '- Overall mean: ' + p.summary.overallMean + '\n';
+  md += '- Affirmative (≥3): ' + p.summary.affirmativeCount + ' of ' + p.summary.affirmativeTotal + '\n\n';
+  md += '### Domain averages\n\n';
+  md += '| Domain | Scored | Mean |\n| --- | --- | --- |\n';
+  Object.values(p.summary.domainScores).forEach(d => {
+    md += '| ' + d.label + ' | ' + d.count + '/' + d.total + ' | ' + (d.count > 0 ? d.avg.toFixed(2) : 'incomplete') + ' |\n';
+  });
+  md += '\n## Indicator detail\n\n';
+  for (const [key, domain] of Object.entries(RUBRIC)) {
+    md += '### ' + domain.label + '\n\n';
+    domain.indicators.forEach(ind => {
+      const detail = p.indicators[ind.id];
+      md += '#### ' + detail.name + '\n\n';
+      if (detail.score) {
+        md += '**Score:** ' + detail.score + ' (' + detail.scoreLabel + ') · mean ' + detail.mean + ' · ' + detail.questionsAnswered + '/' + detail.questionsTotal + ' answered\n\n';
+      } else {
+        md += '**Score:** pending (only ' + detail.questionsAnswered + '/' + detail.questionsTotal + ' answered)\n\n';
+      }
+      detail.questions.forEach((q, i) => {
+        md += (i + 1) + '. ' + q.text + '\n';
+        if (q.answer) md += '   - Answer: ' + q.answer + ' — ' + q.answerLabel + '\n';
+        else md += '   - Answer: not yet answered\n';
+        if (q.evidence) md += '   - Evidence: ' + q.evidence.replace(/\n/g, ' ') + '\n';
+        md += '\n';
+      });
+      if (detail.disconfirming) md += '**Disconfirming evidence:** ' + detail.disconfirming + '\n\n';
+      if (detail.justification) md += '**Justification:** ' + detail.justification + '\n\n';
+    });
+  }
+  downloadFile(md, 'dca_report_' + p.district.replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0,10) + '.md', 'text/markdown');
+}
+
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('import-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.district) throw new Error('Invalid JSON: no district name');
+      const newState = {
+        district: data.district,
+        cohort: data.cohort || '',
+        scorer: data.scorer || '',
+        answers: {},
+        disconfirming: {},
+        justification: {},
+        createdAt: data.createdAt || new Date().toISOString(),
+        lastSaved: null,
+        rubricVersion: data.rubricVersion || '2.0'
+      };
+      if (data.indicators) {
+        Object.entries(data.indicators).forEach(([id, d]) => {
+          if (d.questions) {
+            d.questions.forEach((q, i) => {
+              if (q.answer) {
+                newState.answers[qKey(id, i)] = { val: q.answer, evidence: q.evidence || '' };
+              }
+            });
+          }
+          if (d.disconfirming) newState.disconfirming[id] = d.disconfirming;
+          if (d.justification) newState.justification[id] = d.justification;
+        });
+      }
+      state = newState;
+      document.getElementById('district-name').value = state.district;
+      document.getElementById('cohort').value = state.cohort;
+      document.getElementById('scorer-name').value = state.scorer;
+      saveState();
+      renderAll();
+      alert('Imported: ' + state.district);
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ============================================================================
+// NARRATIVE
+// ============================================================================
+function generateNarrative() {
+  if (!state.district) { alert('Load or start a district first.'); return; }
+  const s = computeSummary();
+  if (s.indicatorsScored === 0) {
+    alert('No indicators scored yet. Answer at least 2 questions on at least one indicator before generating a narrative.');
+    return;
+  }
+
+  const domainOrdered = Object.entries(s.domainScores).map(([k, d]) => ({ key: k, ...d })).filter(d => d.count > 0).sort((a, b) => b.avg - a.avg);
+  const strongest = domainOrdered[0];
+  const weakest = domainOrdered[domainOrdered.length - 1];
+
+  const priorityNeeds = [];
+  for (const [key, domain] of Object.entries(RUBRIC)) {
+    domain.indicators.forEach(ind => {
+      const si = getIndicatorScore(ind);
+      if (si.score !== null && si.score < 3) {
+        priorityNeeds.push({ domain: domain.label, name: ind.name, score: si.score, mean: si.mean, notes: state.justification[ind.id] });
+      }
+    });
+  }
+  priorityNeeds.sort((a, b) => a.score - b.score);
+
+  const tensions = [];
+  for (const [key, domain] of Object.entries(RUBRIC)) {
+    domain.indicators.forEach(ind => {
+      const d = state.disconfirming[ind.id];
+      if (d && d.trim().length > 10) tensions.push({ name: ind.name, domain: domain.label, text: d });
+    });
+  }
+
+  let narrative = '';
+  narrative += state.district.toUpperCase() + ' — CAPACITY NARRATIVE\n';
+  narrative += 'Evaluator: ' + (state.scorer || 'unspecified') + ' · Rubric v' + (state.rubricVersion || '2.0') + '\n';
+  narrative += 'Generated ' + new Date().toLocaleDateString() + '\n';
+  narrative += '─'.repeat(64) + '\n\n';
+
+  narrative += 'SUMMARY\n\n';
+  narrative += state.district + ' completed ' + s.questionsAnswered + ' of ' + s.questionsTotal + ' guiding questions, producing auto-computed scores on ' + s.indicatorsScored + ' of ' + s.indicatorsTotal + ' indicators. ';
+  narrative += 'Overall mean: ' + s.overallAvg + '. Affirmative indicators (score ≥ 3): ' + s.affirmativeStr + '.\n\n';
+  if (domainOrdered.length === 4) {
+    narrative += 'Profile: strongest in ' + strongest.label.toLowerCase() + ' (' + strongest.avg.toFixed(2) + '), weakest in ' + weakest.label.toLowerCase() + ' (' + weakest.avg.toFixed(2) + ').\n\n';
+  }
+
+  narrative += 'STRONGEST DOMAIN: ' + (strongest ? strongest.label.toUpperCase() : 'PENDING') + '\n\n';
+  if (strongest) {
+    const strongInds = RUBRIC[strongest.key].indicators.map(ind => ({ ind, ...getIndicatorScore(ind) })).filter(x => x.score !== null).sort((a, b) => b.score - a.score);
+    narrative += 'Mean ' + strongest.avg.toFixed(2) + ' across ' + strongest.count + ' scored indicators. ';
+    if (strongInds.length > 0 && strongInds[0].score >= 3) {
+      narrative += 'Strongest indicator: ' + strongInds[0].ind.name + ' (score ' + strongInds[0].score + '). ';
+      const just = state.justification[strongInds[0].ind.id];
+      if (just) narrative += 'Justification: ' + just + '\n\n';
+      else narrative += '\n\n';
+    } else {
+      narrative += '\n\n';
+    }
+  }
+
+  narrative += 'PRIORITY CAPACITY NEEDS\n\n';
+  if (priorityNeeds.length === 0) {
+    narrative += 'No indicators scored below the affirmative threshold among completed ratings. Either capacity is strong, or additional scoring is needed. Consider reviewing whether any current scores were based on thin evidence.\n\n';
+  } else {
+    narrative += 'Indicators below affirmative (score < 3), in priority order:\n\n';
+    priorityNeeds.forEach((n, i) => {
+      narrative += (i + 1) + '. ' + n.name + ' (' + n.domain + ') — score ' + n.score + ', mean ' + n.mean;
+      if (n.notes) narrative += '. ' + n.notes.split('\n')[0];
+      narrative += '\n';
+    });
+    narrative += '\n';
+  }
+
+  narrative += 'CROSS-SOURCE TENSIONS\n\n';
+  if (tensions.length === 0) {
+    narrative += 'No disconfirming evidence was logged. Before finalizing, ensure disconfirming evidence has been actively sought — absence of documented tension may signal insufficient interrogation rather than genuine convergence.\n\n';
+  } else {
+    narrative += 'Indicators with documented disconfirming evidence:\n\n';
+    tensions.slice(0, 6).forEach(t => {
+      narrative += '• ' + t.name + ' (' + t.domain + '): ' + t.text.split('\n')[0] + '\n';
+    });
+    if (tensions.length > 6) narrative += '• Plus ' + (tensions.length - 6) + ' additional.\n';
+    narrative += '\n';
+  }
+
+  narrative += 'RECOMMENDED PHASE 3 PRIORITY\n\n';
+  if (priorityNeeds.length > 0) {
+    const top = priorityNeeds[0];
+    narrative += 'Prioritize action on ' + top.name.toLowerCase() + ' within the ' + top.domain.toLowerCase() + ' domain — lowest score (' + top.score + ') in the profile. ';
+    if (weakest && strongest && weakest.label !== strongest.label) {
+      narrative += 'At the domain level, ' + weakest.label.toLowerCase() + ' (' + weakest.avg.toFixed(2) + ') is the area of broadest need and should anchor Phase 3 planning.\n\n';
+    }
+  } else {
+    narrative += 'Complete more indicators before finalizing Phase 3 recommendations.\n\n';
+  }
+
+  narrative += '─'.repeat(64) + '\n';
+  narrative += 'Auto-generated draft. Verify against the full audit trail before sharing with the district.\n';
+
+  document.getElementById('narrative-body').textContent = narrative;
+  document.getElementById('narrative-section').classList.add('show');
+  document.getElementById('narrative-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============================================================================
+// COMPARE VIEW (Inter-rater reliability)
+// ============================================================================
+let compareA = null, compareB = null;
+
+function loadCompareFile(slot) {
+  const inputId = 'file-compare-' + slot;
+  document.getElementById(inputId).click();
+}
+
+function handleCompareFile(slot, file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (slot === 'a') compareA = data;
+      else compareB = data;
+      document.getElementById('meta-' + slot).innerHTML =
+        '<strong>' + escapeHtml(data.district) + '</strong><br>' +
+        'Evaluator: ' + escapeHtml(data.scorer || 'unknown') + '<br>' +
+        'Rubric v' + escapeHtml(data.rubricVersion || '?') + ' · ' +
+        (data.summary?.indicatorsScored || 0) + ' indicators scored';
+      renderCompareResults();
+    } catch (err) {
+      alert('Failed to read file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function computeCohenKappa(pairs) {
+  // pairs: array of {a, b} with integer ratings 1-4
+  if (pairs.length === 0) return null;
+  const categories = [1, 2, 3, 4];
+  const n = pairs.length;
+
+  let agreed = 0;
+  pairs.forEach(p => { if (p.a === p.b) agreed++; });
+  const po = agreed / n;
+
+  // Expected by chance
+  let pe = 0;
+  categories.forEach(c => {
+    const pA = pairs.filter(p => p.a === c).length / n;
+    const pB = pairs.filter(p => p.b === c).length / n;
+    pe += pA * pB;
+  });
+
+  if (pe === 1) return { po, pe, kappa: 1.0, n };
+  const kappa = (po - pe) / (1 - pe);
+  return { po, pe, kappa, n };
+}
+
+function renderCompareResults() {
+  const container = document.getElementById('compare-results');
+  if (!compareA || !compareB) {
+    container.innerHTML = '';
+    return;
+  }
+
+  if (compareA.district !== compareB.district) {
+    container.innerHTML = '<div style="background: #FCEBEB; padding: 12px 14px; border-radius: var(--radius-sm); color: #A32D2D; margin-bottom: 12px; font-size: 13px;">⚠ District names do not match: "' + escapeHtml(compareA.district) + '" vs "' + escapeHtml(compareB.district) + '". Inter-rater reliability requires both evaluators to have scored the same district.</div>';
+    return;
+  }
+
+  // Build comparison rows
+  const pairs = [];
+  const rows = [];
+  for (const [dkey, domain] of Object.entries(RUBRIC)) {
+    domain.indicators.forEach(ind => {
+      const indA = compareA.indicators?.[ind.id];
+      const indB = compareB.indicators?.[ind.id];
+      const sA = indA?.score;
+      const sB = indB?.score;
+      let cls = 'partial';
+      if (sA !== null && sB !== null && sA !== undefined && sB !== undefined) {
+        cls = sA === sB ? 'agree' : 'disagree';
+        if (sA && sB) pairs.push({ a: sA, b: sB, indicator: ind.name });
+      }
+      rows.push({
+        domain: domain.label,
+        name: ind.name,
+        scoreA: sA !== null && sA !== undefined ? sA : '—',
+        scoreB: sB !== null && sB !== undefined ? sB : '—',
+        cls,
+        diff: (sA && sB) ? Math.abs(sA - sB) : '—'
+      });
+    });
+  }
+
+  const kappa = computeCohenKappa(pairs);
+  const agreeCount = pairs.filter(p => p.a === p.b).length;
+
+  let kappaInterpretation = '';
+  if (kappa) {
+    if (kappa.kappa >= 0.81) kappaInterpretation = 'almost perfect';
+    else if (kappa.kappa >= 0.61) kappaInterpretation = 'substantial (meets threshold)';
+    else if (kappa.kappa >= 0.41) kappaInterpretation = 'moderate';
+    else if (kappa.kappa >= 0.21) kappaInterpretation = 'fair';
+    else kappaInterpretation = 'slight/poor';
+  }
+
+  let html = '<div class="kappa-box">';
+  html += '<div><p class="kappa-label">Percent agreement</p><p class="kappa-value">' + (kappa ? (kappa.po * 100).toFixed(0) + '%' : '—') + '</p></div>';
+  html += '<div><p class="kappa-label">Cohen\'s κ</p><p class="kappa-value">' + (kappa ? kappa.kappa.toFixed(2) : '—') + '</p><p style="font-size:10px;color:var(--text-tertiary);margin:0;">' + kappaInterpretation + '</p></div>';
+  html += '<div><p class="kappa-label">Indicators compared</p><p class="kappa-value">' + (kappa ? kappa.n : 0) + '</p><p style="font-size:10px;color:var(--text-tertiary);margin:0;">of ' + rows.length + ' total</p></div>';
+  html += '<div><p class="kappa-label">Agreements</p><p class="kappa-value">' + agreeCount + '/' + (kappa ? kappa.n : 0) + '</p></div>';
+  html += '</div>';
+
+  html += '<table class="compare-table"><thead><tr><th>Domain</th><th>Indicator</th><th>Evaluator A</th><th>Evaluator B</th><th>Diff</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr><td style="color:var(--text-secondary);">' + r.domain + '</td><td>' + escapeHtml(r.name) + '</td>' +
+            '<td class="' + r.cls + '" style="text-align:center;">' + r.scoreA + '</td>' +
+            '<td class="' + r.cls + '" style="text-align:center;">' + r.scoreB + '</td>' +
+            '<td style="text-align:center;">' + r.diff + '</td></tr>';
+  });
+  html += '</tbody></table>';
+
+  html += '<p style="font-size:12px;color:var(--text-secondary);margin-top:12px;line-height:1.6;">Kappa ≥ 0.60 meets your methodology\'s substantial-agreement threshold. Target disagreements (red rows) for consensus meeting; examine partial rows for missing data. Export this comparison by using your browser\'s print function.</p>';
+
+  container.innerHTML = html;
+}
+
+function refreshDistrictsList() {
+  const list = document.getElementById('districts-list');
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('dca_v2_'));
+  if (keys.length === 0) {
+    list.innerHTML = '<p style="grid-column: 1/-1; color: var(--text-tertiary); font-size: 12px; margin: 0;">No districts saved yet in this browser.</p>';
+    return;
+  }
+  list.innerHTML = keys.map(k => {
+    try {
+      const d = JSON.parse(localStorage.getItem(k));
+      const all = Object.values(RUBRIC).flatMap(dom => dom.indicators);
+      const scored = all.filter(ind => {
+        const ans = ind.questions.filter((q, i) => d.answers?.[ind.id + ':' + i]?.val).length;
+        return ans >= 2;
+      }).length;
+      return '<div class="dist-list-item"><span><strong>' + escapeHtml(d.district) + '</strong><br><span style="color:var(--text-tertiary);font-size:10px;">' + scored + '/' + all.length + ' scored' + (d.cohort ? ' · ' + escapeHtml(d.cohort) : '') + (d.scorer ? ' · ' + escapeHtml(d.scorer) : '') + '</span></span>' +
+        '<div><button data-action="load" data-dist="' + escapeHtml(d.district) + '">Load</button>' +
+        '<button data-action="delete" data-dist="' + escapeHtml(d.district) + '" data-key="' + k + '" style="color:#A32D2D;">Delete</button></div></div>';
+    } catch (e) { return ''; }
+  }).join('');
+  list.querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      if (b.dataset.action === 'load') {
+        document.getElementById('district-name').value = b.dataset.dist;
+        loadDistrict();
+      } else if (b.dataset.action === 'delete') {
+        if (confirm('Delete ' + b.dataset.dist + '? Export first if you want a backup.')) {
+          localStorage.removeItem(b.dataset.key);
+          refreshDistrictsList();
+          if (state.district === b.dataset.dist) resetForm();
+        }
+      }
+    };
+  });
+}
+
+// ============================================================================
+// MODE TOGGLE
+// ============================================================================
+document.getElementById('mode-score').addEventListener('click', () => {
+  currentMode = 'score';
+  document.getElementById('mode-score').classList.add('active');
+  document.getElementById('mode-compare').classList.remove('active');
+  document.getElementById('score-view').style.display = '';
+  document.getElementById('compare-view').style.display = 'none';
+});
+document.getElementById('mode-compare').addEventListener('click', () => {
+  currentMode = 'compare';
+  document.getElementById('mode-score').classList.remove('active');
+  document.getElementById('mode-compare').classList.add('active');
+  document.getElementById('score-view').style.display = 'none';
+  document.getElementById('compare-view').style.display = '';
+});
+
+document.getElementById('load-compare-a').addEventListener('click', () => loadCompareFile('a'));
+document.getElementById('load-compare-b').addEventListener('click', () => loadCompareFile('b'));
+document.getElementById('file-compare-a').addEventListener('change', e => {
+  if (e.target.files[0]) handleCompareFile('a', e.target.files[0]);
+  e.target.value = '';
+});
+document.getElementById('file-compare-b').addEventListener('change', e => {
+  if (e.target.files[0]) handleCompareFile('b', e.target.files[0]);
+  e.target.value = '';
+});
+
+// ============================================================================
+// WIRE UP HEADER CONTROLS
+// ============================================================================
+document.getElementById('district-name').addEventListener('input', e => { state.district = e.target.value; });
+document.getElementById('cohort').addEventListener('change', e => { state.cohort = e.target.value; debouncedSave(); });
+document.getElementById('scorer-name').addEventListener('input', e => { state.scorer = e.target.value; debouncedSave(); });
+document.getElementById('load-btn').addEventListener('click', loadDistrict);
+document.getElementById('reset-btn').addEventListener('click', resetForm);
+document.getElementById('export-json-btn').addEventListener('click', exportJSON);
+document.getElementById('export-md-btn').addEventListener('click', exportMarkdown);
+document.getElementById('summary-btn').addEventListener('click', generateNarrative);
+document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+document.getElementById('copy-narrative-btn').addEventListener('click', () => {
+  const text = document.getElementById('narrative-body').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-narrative-btn');
+    btn.textContent = 'Copied';
+    setTimeout(() => { btn.textContent = 'Copy to clipboard'; }, 1800);
+  });
+});
+document.getElementById('close-narrative-btn').addEventListener('click', () => {
+  document.getElementById('narrative-section').classList.remove('show');
+});
+
+renderAll();
+refreshDistrictsList();
+</script>
+</body>
+</html>
